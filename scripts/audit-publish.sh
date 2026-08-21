@@ -107,6 +107,30 @@ else
 fi
 
 echo
+echo "== audit-publish: sken git historie =="
+# Pracovní strom může být čistý, a přesto citlivá data zůstanou dohledatelná
+# ve starších commitech — publikuje se celá historie, ne jen HEAD. Tenhle
+# průchod projde všechny dosažitelné commity; nález znamená, že nestačí soubor
+# smazat, historii je potřeba přepsat (a na GitHubu repo znovu založit, protože
+# staré commity tam zůstávají dosažitelné přes SHA).
+hist_hits=""
+for commit in $(git rev-list --all 2>/dev/null); do
+  hit="$(git grep -inE "$PATTERN" "$commit" -- "${EXCLUDE_PATHSPECS[@]}" 2>/dev/null | grep -v 'konecny-lukas' | head -3 || true)"
+  if [ -n "$hit" ]; then
+    hist_hits="${hist_hits}${hit}"$'\n'
+  fi
+done
+
+if [ -n "$hist_hits" ]; then
+  echo "NÁLEZ: citlivé řetězce ve starších commitech:"
+  printf '%s' "$hist_hits" | head -15
+  echo "(nestačí smazat soubor — historii je nutné přepsat)"
+  status=1
+else
+  echo "OK: žádné citlivé řetězce ani v historii."
+fi
+
+echo
 if [ "$status" -eq 0 ]; then
   echo "AUDIT ČISTÝ — lze publikovat."
 else
