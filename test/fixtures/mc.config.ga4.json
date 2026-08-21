@@ -1,0 +1,12 @@
+{
+  "name": "GA4TEST",
+  "tagline": "test ga4",
+  "modules": {
+    "ga4": {
+      "keyFile": "test/fixtures/does-not-exist.json",
+      "sites": [
+        { "id": "example", "property": "123456789", "host": "example.com", "label": "Example" }
+      ]
+    }
+  }
+}

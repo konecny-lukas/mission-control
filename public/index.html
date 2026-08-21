@@ -1,0 +1,165 @@
+<!doctype html>
+<html lang="cs" data-boot="run">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#010409">
+<title>Mission Control</title>
+<link rel="icon" href="/icon.svg" type="image/svg+xml">
+<link rel="manifest" href="/manifest.webmanifest">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Chakra+Petch:wght@500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="styles.css">
+</head>
+<body data-state="ok" class="no-alerts">
+<div class="scanlines"></div>
+<div class="vignette"></div>
+
+<header class="topbar">
+  <div class="brand"><span class="mark">⟁</span><span class="word">MISSION CONTROL</span><span class="variant">DATAFRAME</span></div>
+  <div class="t-center"><span class="clock" id="clock">--:--:--</span><span class="date" id="dateEl">—</span></div>
+  <div class="t-right">
+    <button class="kbtn" id="pvBtn" type="button" title="Náhledy — preview weby a dev servery registrované přes mc-preview">⊞ NÁHLEDY</button>
+    <button class="kbtn" id="palBtn">⌘K&ensp;PŘÍKAZY</button>
+    <div class="pill ok" id="pill" role="button" tabindex="0"><i class="dot"></i><span id="pillTxt">NAVAZUJI SPOJENÍ</span><i class="caret"></i></div>
+    <button class="kbtn ghost" id="bootBtn" title="Přehrát boot sekvenci">⟲ BOOT</button>
+  </div>
+</header>
+
+<main class="deck">
+  <section class="panel" id="p-system">
+    <div class="ptitle"><h2><span class="tw">SYSTÉM</span></h2><span class="rule"></span><span class="meta" id="sysMeta"></span><span class="sdot idle"></span></div>
+    <div class="pb" id="systemBody"></div>
+  </section>
+
+  <section class="panel" id="p-core">
+    <div class="ptitle"><h2><span class="tw">JÁDRO</span></h2><span class="rule"></span><span class="meta" id="coreHost"></span><span class="sdot idle"></span></div>
+    <div class="core-wrap">
+      <div class="core-canvas"><canvas id="core"></canvas></div>
+      <div class="core-meta" id="coreMeta"></div>
+    </div>
+  </section>
+
+  <section class="panel" id="p-alerts">
+    <div class="ptitle"><h2><span class="tw">VÝSTRAHY</span></h2><span class="rule"></span><span class="meta" id="alMeta"></span><span class="sdot idle"></span></div>
+    <div class="pb" id="alertsBody"></div>
+  </section>
+
+  <!-- modulový panel (uptime) — skrytý atributem hidden, dokud CFG.modules.uptime
+       není zapnuté (viz public/ui/panels.js registerSection('weby', …)) -->
+  <section class="panel click" id="p-weby" tabindex="0" role="button" aria-label="Otevřít detail webů" hidden>
+    <div class="ptitle"><h2><span class="tw">WEBY</span></h2><span class="rule"></span><span class="meta" id="webMeta"></span><span class="hint">▸ DETAIL</span><span class="sdot idle"></span></div>
+    <div class="pb" id="webyBody"></div>
+  </section>
+
+  <!-- modulový panel (ga4) — skrytý atributem hidden, dokud CFG.modules.ga4
+       není zapnuté (viz public/ui/panels.js registerSection('traffic', …)) -->
+  <section class="panel click" id="p-traffic" tabindex="0" role="button" aria-label="Otevřít detail návštěvnosti" hidden>
+    <div class="ptitle"><h2><span class="tw">NÁVŠTĚVNOST</span></h2><span class="rule"></span><span class="meta" id="trafficMeta"></span><span class="hint">▸ DETAIL</span><span class="sdot idle"></span></div>
+    <div class="pb" id="trafficBody"></div>
+  </section>
+
+  <!-- modulový panel (gsc) — skrytý atributem hidden, dokud CFG.modules.gsc
+       není zapnuté (viz public/ui/panels.js registerSection('search', …)) -->
+  <section class="panel click" id="p-search" tabindex="0" role="button" aria-label="Otevřít detail vyhledávání" hidden>
+    <div class="ptitle"><h2><span class="tw">VYHLEDÁVÁNÍ</span></h2><span class="rule"></span><span class="meta" id="searchMeta"></span><span class="hint">▸ DETAIL</span><span class="sdot idle"></span></div>
+    <div class="pb" id="searchBody"></div>
+  </section>
+
+  <!-- modulový panel (indexace) — skrytý atributem hidden, dokud CFG.modules.indexace
+       není zapnuté (viz public/ui/panels.js registerSection('index', …)). Klik na
+       konkrétní řádek webu otevře drawer rovnou zaostřený na jeho kartu (opts.focus),
+       proto — na rozdíl od WEBY/NÁVŠTĚVNOST/VYHLEDÁVÁNÍ — NEMÁ třídu „click"/role
+       „button" (klikatelné jsou řádky uvnitř, ne celý panel; viz styles.css #p-index .r).
+       Sdílí ř. 5 s WPSCHED (dělený na poloviny: index 1/7, wpsched 7/13). -->
+  <section class="panel" id="p-index" hidden>
+    <div class="ptitle"><h2><span class="tw">INDEXACE</span></h2><span class="rule"></span><span class="meta" id="ixMeta"></span><span class="sdot idle"></span></div>
+    <div class="pb" id="indexBody"></div>
+  </section>
+
+  <!-- modulový panel (wpsched) — skrytý atributem hidden, dokud CFG.modules.wpsched
+       není zapnuté (viz public/ui/panels.js registerSection('wpsched', …)). Na
+       rozdíl od INDEXACE nemá per-řádek fokus (jen pár webů) — celý panel je
+       klikatelný jako WEBY/NÁVŠTĚVNOST/VYHLEDÁVÁNÍ. -->
+  <section class="panel click" id="p-wpsched" tabindex="0" role="button" aria-label="Otevřít detail naplánovaných WP postů" hidden>
+    <div class="ptitle"><h2><span class="tw">WP PLÁNOVANÉ</span></h2><span class="rule"></span><span class="meta" id="wpschedMeta"></span><span class="hint">▸ DETAIL</span><span class="sdot idle"></span></div>
+    <div class="pb" id="wpschedBody"></div>
+  </section>
+
+  <!-- modulový panel (nanoclaw) — skrytý atributem hidden, dokud CFG.modules.nanoclaw
+       není zapnuté (viz public/ui/panels.js registerSection('nanoclaw', …)). ř. 4
+       a 5 jsou už plné (3 + 2 panely) — nanoclaw sdílí ř. 6 s HLÍDAČEM (watchdog),
+       dělený na poloviny (1/7, 7/13) — stejný vzor jako INDEXACE/WP PLÁNOVANÉ na
+       ř. 5 (viz styles.css #p-nanoclaw/#p-watchdog). Read-only panel nad instalací
+       NanoClaw na stejném boxu — MC do ní nic nezapisuje. -->
+  <section class="panel click" id="p-nanoclaw" tabindex="0" role="button" aria-label="Otevřít detail instalace NanoClaw" hidden>
+    <div class="ptitle"><h2><span class="tw">NANOCLAW</span></h2><span class="rule"></span><span class="meta" id="nanoclawMeta"></span><span class="hint">▸ DETAIL</span><span class="sdot idle"></span></div>
+    <div class="pb" id="nanoclawBody"></div>
+  </section>
+
+  <!-- modulový panel (watchdog) — skrytý atributem hidden, dokud CFG.modules.watchdog
+       není zapnuté (viz public/ui/panels.js registerSection('watchdog', …)). Sdílí
+       ř. 6 s NANOCLAW (viz výš). Poslední běh hodinového hlídače cronů — MC sem
+       jen ČTE data/watchdog-history.jsonl + data/narrative/*.log (modules/watchdog.js),
+       nikdy sám nespouští claude; vnější cron záznam nastavuje INSTALL.md. -->
+  <section class="panel click" id="p-watchdog" tabindex="0" role="button" aria-label="Otevřít detail hlídače cronů" hidden>
+    <div class="ptitle"><h2><span class="tw">HLÍDAČ</span></h2><span class="rule"></span><span class="meta" id="watchdogMeta"></span><span class="hint">▸ DETAIL</span><span class="sdot idle"></span></div>
+    <div class="pb" id="watchdogBody"></div>
+  </section>
+
+  <section class="panel" id="p-term">
+    <div class="ptitle"><h2><span class="tw">TERMINÁL</span></h2><span class="rule"></span><span class="meta" id="tmMeta"></span><span class="hint">▸ PŘIPOJIT</span><span class="sdot idle"></span></div>
+    <div class="pb" id="termBody"></div>
+  </section>
+
+  <section class="panel" id="p-srv">
+    <div class="ptitle"><h2><span class="tw">SLUŽBY · KONTEJNERY</span></h2><span class="rule"></span><span class="meta" id="svMeta"></span><span class="sdot idle"></span></div>
+    <div class="pb cols2" id="srvBody"></div>
+  </section>
+
+  <section class="panel" id="p-tasks">
+    <div class="ptitle"><h2><span class="tw">ÚKOLY</span></h2><span class="rule"></span><button class="padd" id="mctAddBtn" type="button" title="Nový úkol do fronty">+ ÚKOL</button><span class="meta" id="tkMeta"></span><span class="sdot idle"></span></div>
+    <!-- formulář je STATICKÝ sourozenec .pb (mimo innerHTML rebuild sekce) — rozepsaný text přežije SSE patche -->
+    <form class="mct-form" id="mctForm" hidden>
+      <input class="mct-subject" id="mctSubject" type="text" maxlength="140" placeholder="co udělat (jeden řádek)" autocomplete="off" spellcheck="false">
+      <textarea class="mct-detail" id="mctDetail" rows="2" maxlength="4000" placeholder="detail zadání (volitelné)"></textarea>
+      <div class="mct-row">
+        <select class="mct-proj" id="mctProj" title="projekt — pracovní adresář úkolu"></select>
+        <button class="btn bsm" type="submit" id="mctSubmit">＋ zařadit</button>
+        <button class="btn bsm" type="button" id="mctCancel">✕</button>
+      </div>
+    </form>
+    <div class="pb" id="tasksBody"></div>
+  </section>
+
+  <section class="panel" id="p-log">
+    <div class="ptitle"><h2><span class="tw">LODNÍ DENÍK</span></h2><span class="rule"></span><span class="meta" id="lgMeta"></span><span class="sdot info"></span></div>
+    <div class="pb" id="logBody"></div>
+  </section>
+</main>
+
+<!-- drawer -->
+<div class="backdrop" id="backdrop"></div>
+<aside class="drawer" id="drawer" aria-hidden="true">
+  <div class="dh"><span class="sdot ok"></span><h3 id="drawerTitle"></h3><button class="x" id="drawerX">ESC ✕</button></div>
+  <div class="db" id="drawerBody"></div>
+</aside>
+
+<!-- mounty pro Fázi 3/4 (viewer, jarvis, paleta) — prázdné placeholdery -->
+<div id="viewer" class="viewer" hidden></div>
+<div id="jarvis" class="jarvis" hidden></div>
+<div id="pal" class="pal" hidden></div>
+
+<!-- boot overlay -->
+<div id="boot" class="boot-ov" aria-hidden="true">
+  <div class="boot-mark">⟁</div>
+  <div class="boot-line">NAVAZUJI SPOJENÍ…</div>
+</div>
+
+<!-- toast -->
+<div id="toast" role="status"></div>
+
+<script type="module" src="app.js"></script>
+</body>
+</html>

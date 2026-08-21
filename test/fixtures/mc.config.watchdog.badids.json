@@ -1,0 +1,13 @@
+{
+  "name": "TESTBOX-BADIDS",
+  "modules": {
+    "watchdog": {
+      "projects": [
+        { "id": "good-id", "label": "Good One" },
+        { "id": "../evil", "label": "Path traversal" },
+        { "id": "bad\nid", "label": "Newline injection" },
+        { "id": "second-ok", "label": "Second Good" }
+      ]
+    }
+  }
+}

@@ -1,0 +1,11 @@
+{
+  "name": "mission-control",
+  "version": "0.1.0",
+  "type": "module",
+  "description": "Jarvis-style HUD pro tvůj VPS — telemetrie, terminály s Claude Code, alerty a volitelné moduly. Zero-dependency Node.",
+  "license": "MIT",
+  "repository": "github:konecny-lukas/mission-control",
+  "engines": { "node": ">=22.5.0" },
+  "main": "server.js",
+  "scripts": { "start": "node server.js", "test": "node --test" }
+}

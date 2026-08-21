@@ -1,0 +1,114 @@
+# Práce na tomhle serveru (Mission Control)
+
+> Šablona pro `~/.claude/CLAUDE.md` (nebo pro `CLAUDE.md` konkrétního
+> projektu). Instalace v ní nahradí `{{MC_DIR}}` skutečnou cestou k Mission
+> Control (typicky `/home/<uživatel>/mission-control`). Máš-li už vlastní
+> `CLAUDE.md`, tenhle obsah k němu připoj, nepřepisuj ho.
+
+Tyhle sessions běží na **bezhlavém (headless) serveru** — není tu GUI ani
+`open`/`xdg-open`. Uživatel vidí terminál přes prohlížeč v Mission Control
+(HUD na `{{MC_DIR}}`), takže **soubor ležící jen na disku sám o sobě neuvidí**.
+
+## Ukazování výsledků v prohlížeči
+
+Kdykoli vyrobíš něco **vizuálního** (HTML report, obrázek, graf, diagram, PDF,
+screenshot, vyrenderovaná stránka), nenech to jako cestu na disku — vystav to
+a dej odkaz:
+
+- **Jeden soubor:**
+
+  ```bash
+  mc-open <soubor>
+  ```
+
+  Vypíše URL `…/file/…`, kterou uživatel otevře v prohlížeči. HTML funguje
+  i s relativními obrázky a odkazy. Soubor musí být uvnitř domovského adresáře.
+
+- **Celá složka, statický build nebo živý dev server:**
+
+  ```bash
+  mc-preview add <slug> --static <dir>   # složka s index.html
+  mc-preview add <slug> --port <n>       # reverse-proxy na dev server (vč. HMR/WS)
+  ```
+
+  Objeví se v Mission Control v uzlu „Náhledy".
+
+**Výsledný odkaz vždy napiš do chatu**, ať na něj jde kliknout.
+
+## Hotovo = ověřeno
+
+- „Hotovo" u změn v UI znamená **ověřeno v reálném prohlížeči**, ne „kód
+  vypadá správně".
+- Po jakékoli změně samotného Mission Control (backend, panely, config) spusť:
+
+  ```bash
+  node {{MC_DIR}}/bin/mc-smoke.js
+  ```
+
+  Výstup přilož. Když aspoň jeden krok skončí FAIL, **nehlásit „opraveno"**.
+- Restart MC po změně backendu/configu dělej přes wrapper, ne holým
+  `systemctl` — hlídá, aby restart nesebral terminálové tmux sessions:
+
+  ```bash
+  bash {{MC_DIR}}/bin/mc-safe-restart.sh
+  ```
+
+  Změny ve `public/` (frontend) restart nepotřebují, stačí reload stránky.
+
+## Opakované úlohy = skutečný cron
+
+Slíbená automatizace bez crontab řádku **neexistuje** — session skončí a nikdo
+nikam „chodit" nebude. Kdykoli slibuješ cokoli pravidelného („každý den",
+„jednou týdně", „hlídej mi to"), použij skill **`novy-cron`** a drž jeho
+checklist: absolutní cesty, vždy `>> log 2>&1` (nikdy `/dev/null`), důkaz do
+chatu (crontab řádek + next-run), volný slot v rozvrhu, rotace logů.
+
+Ztracené terminály po pádu tmuxu (OOM, restart) řeší skill
+**`mc-restore-terminals`**.
+
+## Konfigurace Mission Control
+
+Jediné místo personalizace je **`{{MC_DIR}}/mc.config.json`** (v gitu není,
+vzor je `mc.config.example.json`). Obsahuje branding (`name`, `tagline`,
+`accent`, `port`), terminálové projekty (`terminals.projects`), sledované
+systemd jednotky (`services[]` — panel se stavem služeb; chybí-li klíč, drží
+se defaultní čtveřice `mission-control`/`mc-ttyd`/`tailscaled`/`fail2ban`) a
+sekce volitelných modulů.
+
+**Modul je zapnutý právě tehdy, když má v `modules` svou sekci** — smazáním
+sekce se vypne (kolektor se nespustí, panel se nevykreslí). Dostupné moduly:
+`uptime`, `ga4`, `gsc`, `indexace`, `claudelimits`, `wpsched`, `nanoclaw`,
+`watchdog`. Přesný tvar každé sekce je v `INSTALL.md` (fáze 4).
+
+Po každé změně configu:
+
+```bash
+systemctl --user restart mission-control
+```
+
+Tajemství (klíče, hesla) patří do `{{MC_DIR}}/secrets/` s právy `600` — adresář
+je v `.gitignore`. Do configu se dává jen **cesta** k souboru, nikdy hodnota.
+
+## Narativy (deníky projektů)
+
+Karty projektů a timeline v MC čtou české narativní řádky z
+`{{MC_DIR}}/data/narrative/<id>.log`. Formát je závazný — jinak řádek
+neparsuje:
+
+```
+[YYYY-MM-DD HH:MM] <emoji> <jedna věta česky, co se stalo>
+```
+
+Emoji legenda: `🟢` běží · `⏳` probíhá · `✅` hotovo · `⚠️` varování · `🔴`
+chyba · `💤` klid, nic se nedělo. Jeden řádek na projekt a běh, navazuj na
+předchozí řádek, čísla neber z hlavy (jen z logů/DB). `<id>` musí sedět na
+`id` projektu v `mc.config.json` → `modules.watchdog.projects`.
+
+## Zásady
+
+- **Akce nevracet uživateli.** Když to jde udělat ze serveru, udělej to.
+- U nevratných kroků (mazání dat, přepis produkční konfigurace) se nejdřív
+  zeptej a popiš dopad.
+- Obsah `secrets/` a `.env` nikdy necituj do chatu.
+- Dlouhé dávkové úlohy (>30 min) průběžně persistuj (hotovo/zbývá do souboru),
+  ať přerušená session naváže z disku, ne z paměti.

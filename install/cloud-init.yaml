@@ -1,0 +1,65 @@
+#cloud-config
+# První-boot bootstrap čerstvého Hetzner VPS pro Mission Control.
+# Placeholdery (__FOO__) doplní install/provision-hetzner.sh před uploadem
+# (sed, viz tam). Drž tenhle soubor MINIMÁLNÍ a rychlý — instalace Node.js,
+# ttyd a samotného Mission Control se řeší až přes SSH podle INSTALL.md fáze
+# 1, ne tady (cloud-init musí doběhnout na prvním bootu, ne viset na
+# stahování balíků, které jde bezpečněji a viditelněji udělat později).
+
+hostname: __HOSTNAME__
+fqdn: __HOSTNAME__
+preserve_hostname: false
+
+users:
+  - name: __DEPLOY_USER__
+    groups: [sudo]
+    shell: /bin/bash
+    sudo: ['ALL=(ALL) NOPASSWD:ALL']   # deploy = admin účet, kterým se instaluje/spravuje. Dedikovaný běhový uživatel bez sudo je volitelný krok popsaný v INSTALL.md, ne součást tohohle cloud-initu.
+    lock_passwd: true
+    ssh_authorized_keys:
+      - __SSH_PUBKEY__
+
+# Zpevnění SSH hned od prvního bootu: jen klíč, žádný root.
+ssh_pwauth: false
+disable_root: true
+
+package_update: true
+package_upgrade: false   # rychlejší první boot; aktualizace řeší unattended-upgrades samo
+packages:
+  - git
+  - ufw
+  - fail2ban
+  - unattended-upgrades
+  - tmux
+  - jq
+  - curl
+  - ca-certificates
+
+write_files:
+  - path: /etc/ssh/sshd_config.d/99-mc-hardening.conf
+    permissions: '0644'
+    content: |
+      PermitRootLogin no
+      PasswordAuthentication no
+      KbdInteractiveAuthentication no
+      ChallengeResponseAuthentication no
+      X11Forwarding no
+      MaxAuthTries 3
+      AllowUsers __DEPLOY_USER__
+  - path: /etc/apt/apt.conf.d/20auto-upgrades
+    permissions: '0644'
+    content: |
+      APT::Periodic::Update-Package-Lists "1";
+      APT::Periodic::Unattended-Upgrade "1";
+
+runcmd:
+  - systemctl restart ssh || systemctl restart sshd || true
+  # Nainstaluj jen Tailscale démona. `tailscale up` (s auth klíčem) se pouští
+  # AŽ přes SSH v INSTALL.md — auth klíč nesmí skončit v cloud-init user_data,
+  # protože ten je čitelný přes metadata API serveru (Hetzner ho neskrývá
+  # žádnému, kdo má přístup k VM/API), takže by to byl trvalý leak tajemství.
+  - curl -fsSL https://tailscale.com/install.sh | sh
+  - systemctl enable --now tailscaled || true
+  - touch /var/lib/mc-bootstrap-done
+
+final_message: "MC bootstrap cloud-init hotovo za $UPTIME s"

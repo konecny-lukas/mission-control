@@ -1,0 +1,12 @@
+{
+  "name": "GSCTEST",
+  "tagline": "test gsc",
+  "modules": {
+    "gsc": {
+      "keyFile": "test/fixtures/does-not-exist.json",
+      "sites": [
+        { "id": "example", "property": "https://example.com/", "label": "Example" }
+      ]
+    }
+  }
+}

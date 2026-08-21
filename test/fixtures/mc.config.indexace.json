@@ -1,0 +1,12 @@
+{
+  "name": "INDEXACETEST",
+  "tagline": "test indexace",
+  "modules": {
+    "indexace": {
+      "keyFile": "test/fixtures/does-not-exist.json",
+      "sites": [
+        { "id": "example", "property": "https://example.com/", "sitemap": "https://example.com/sitemap.xml", "label": "Example" }
+      ]
+    }
+  }
+}

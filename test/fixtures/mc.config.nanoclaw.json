@@ -1,0 +1,6 @@
+{
+  "name": "TESTBOX",
+  "modules": {
+    "nanoclaw": { "dir": "test/fixtures/nanoclaw-tmp" }
+  }
+}

@@ -1,0 +1,36 @@
+[Unit]
+Description=Mission Control terminály (ttyd → tmux → Claude Code)
+After=network-online.target
+
+[Service]
+Type=simple
+WorkingDirectory=%h/mission-control
+EnvironmentFile=-%h/mission-control/mc.env
+# Stejný TMUX_TMPDIR jako mission-control.service (viz komentář tam) — MUSÍ
+# sedět na obou jednotkách, jinak si každá izolovaně (PrivateTmp=true)
+# založí vlastní tmux socket a ty dvě jednotky se navzájem nevidí.
+Environment=TMUX_TMPDIR=%h/mission-control/data/.tmux
+ExecStartPre=/usr/bin/mkdir -p %h/mission-control/data/.tmux
+ExecStart=/usr/bin/ttyd --writable --interface 127.0.0.1 --port 7682 --base-path /term --url-arg %h/mission-control/mc-claude.sh
+Restart=on-failure
+RestartSec=3
+
+# Jen loopback — Mission Control reverzně proxuje /term (server.js) a je
+# jedinou branou k terminálům; expozici navenek řeší vrstva před MC (Tailscale
+# serve/Funnel, SSH tunel…), viz INSTALL.md. --url-arg: ttyd předá parametry
+# z URL (?arg=<key>&arg=<sid>) jako argv mc-claude.sh, ten podle allowlistu
+# (bin/mc-project.mjs, config.js CFG.terminals.projects) namapuje klíč na
+# adresář a naváže/vytvoří perzistentní tmux session s Claude Code uvnitř.
+
+# Stejné pískoviště jako mission-control.service (viz komentář tam k pasti
+# status=218/CAPABILITIES) — ReadWritePaths obsahuje ~/.claude, protože sem
+# Claude Code spuštěný z terminálu zapisuje session/creds.
+NoNewPrivileges=true
+ProtectSystem=strict
+ReadWritePaths=%h/mission-control %h/.claude
+PrivateTmp=true
+RestrictRealtime=true
+LockPersonality=true
+
+[Install]
+WantedBy=default.target

@@ -1,0 +1,9 @@
+{
+  "name": "SERVICES-TEST",
+  "services": [
+    { "unit": "mc-smoke-fixture-svc", "label": "Fixture služba", "scope": "user" },
+    { "unit": "bad unit name!", "label": "Neplatný název — zahodit" },
+    { "unit": "-leading-dash-svc", "label": "Vedoucí pomlčka — zahodit" },
+    { "unit": "mc-smoke-system-svc", "label": "Systémová", "scope": "system" }
+  ]
+}

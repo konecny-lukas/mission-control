@@ -1,0 +1,11 @@
+data/*
+!data/.gitkeep
+secrets/
+/mc.config.json
+/mc.env
+node_modules/
+__pycache__/
+*.log
+.shots/
+.superpowers/
+.internal/

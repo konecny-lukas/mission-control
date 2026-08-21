@@ -1,0 +1,77 @@
+{
+  "name": "MŮJ SERVER",
+  "tagline": "server HUD",
+  "accent": "#2ba8ff",
+  "port": 8088,
+  "publicUrl": null,
+  "terminals": {
+    "projects": [
+      { "key": "home", "label": "Domů", "dir": "~" },
+      { "key": "app", "label": "Mission Control", "dir": "~/mission-control" }
+    ]
+  },
+  "services": [
+    { "unit": "muj-projekt", "label": "Můj projekt", "scope": "user" }
+  ],
+  "modules": {
+    "uptime": {
+      "sites": [
+        { "id": "web", "label": "Firemní web", "url": "https://example.com" }
+      ],
+      "intervalMs": 60000,
+      "timeoutMs": 10000,
+      "retentionDays": 30
+    },
+    "ga4": {
+      "keyFile": "secrets/google.json",
+      "sites": [
+        { "id": "web", "label": "Firemní web", "property": "123456789", "host": "example.com" }
+      ],
+      "timezone": "Europe/Prague"
+    },
+    "gsc": {
+      "keyFile": "secrets/google.json",
+      "sites": [
+        { "id": "web", "label": "Firemní web", "property": "https://example.com/" }
+      ],
+      "windowDays": 90
+    },
+    "indexace": {
+      "keyFile": "secrets/google.json",
+      "sites": [
+        {
+          "id": "web",
+          "label": "Firemní web",
+          "property": "https://example.com/",
+          "sitemap": "https://example.com/sitemap.xml"
+        }
+      ],
+      "languageCode": "cs-CZ",
+      "maxUrls": 2000
+    },
+    "claudelimits": {},
+    "wpsched": {
+      "sites": [
+        {
+          "id": "web",
+          "label": "Firemní web",
+          "url": "https://example.com",
+          "user": "wp-uzivatel",
+          "appPasswordFile": "secrets/wp-web.pass"
+        }
+      ]
+    },
+    "nanoclaw": {
+      "dir": "~/nanoclaw"
+    },
+    "watchdog": {
+      "model": "sonnet",
+      "budgetUsd": 1.0,
+      "timeoutSecs": 600,
+      "permissionMode": "safe",
+      "projects": [
+        { "id": "zalohy", "label": "Zálohy", "sources": "/home/uzivatel/zalohy/logs/backup.log" }
+      ]
+    }
+  }
+}

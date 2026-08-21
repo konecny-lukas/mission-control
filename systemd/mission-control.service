@@ -1,0 +1,50 @@
+[Unit]
+Description=Mission Control — status HUD + servisní agent
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+WorkingDirectory=%h/mission-control
+EnvironmentFile=-%h/mission-control/mc.env
+Environment=NODE_OPTIONS=--no-warnings
+# Sdílený adresář pro tmux socket (-L mc, viz mc-tmux.conf) mezi touhle
+# jednotkou a mc-ttyd.service. BEZ tohohle by PrivateTmp=true dal každé
+# jednotce vlastní izolované /tmp a tmux server, který spouští
+# mc-ttyd.service (přes mc-claude.sh), by odsud nebyl vidět — terminálový
+# panel prázdný, term.kill/rename/scroll/keys i mctasks session tiše
+# selžou. ExecStartPre zajistí, že adresář existuje před prvním startem
+# (data/ je v repu jen jako .gitkeep, .tmux podsložka ne).
+Environment=TMUX_TMPDIR=%h/mission-control/data/.tmux
+ExecStartPre=/usr/bin/mkdir -p %h/mission-control/data/.tmux
+ExecStart=/usr/bin/env node server.js
+Restart=on-failure
+RestartSec=3
+
+# ---- pískoviště ------------------------------------------------------------
+# Proces smí zapisovat jen do vlastního adresáře a do ~/.claude (tam si Claude
+# Code ukládá session/creds/nastavení — Jarvis výše spouští `claude` jako
+# potomka tohoto procesu a dědí stejný sandbox). Zbytek systému je díky
+# ProtectSystem=strict read-only.
+#
+# SCHVÁLNĚ tu chybí kernel/cap direktivy (CapabilityBoundingSet=,
+# AmbientCapabilities=, ProtectKernelModules=, ProtectKernelTunables=…):
+# `systemctl --user` manager nemá CAP_SETPCAP, aby je aplikoval, a jednotka
+# by při startu spadla na status=218/CAPABILITIES. Direktivy níž fungují bez
+# capabilit (mount namespace / prctl, ne capability set), takže zůstávají.
+#
+# Tohle je výchozí „jednoduchá" instalace — MC běží jako TY (tvůj vlastní
+# účet) pod ~/mission-control, takže sandbox je jen doplňkový, ne primární
+# bezpečnostní hranice (tu terminálům/Jarvisovi dává důvěra tobě jako
+# vlastníkovi boxu). Přísnější varianta s dedikovaným uživatelem `mc` bez
+# sudo (skutečná OS hranice) je popsaná v INSTALL.md — tam se ReadWritePaths
+# zúží na `/srv`, protože celý HOME toho uživatele leží pod `/srv`.
+NoNewPrivileges=true
+ProtectSystem=strict
+ReadWritePaths=%h/mission-control %h/.claude
+PrivateTmp=true
+RestrictRealtime=true
+LockPersonality=true
+
+[Install]
+WantedBy=default.target

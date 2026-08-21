@@ -1,0 +1,16 @@
+{
+  "name": "TESTBOX",
+  "tagline": "test hud",
+  "accent": "#2ba8ff",
+  "terminals": { "projects": [ { "key": "home", "label": "Domů", "dir": "~" } ] },
+  "modules": {
+    "uptime": { "sites": [ { "id": "example", "label": "Example", "url": "https://example.com" } ] },
+    "ga4": { "keyFile": "test/fixtures/does-not-exist.json", "sites": [ { "id": "example", "property": "123456789", "host": "example.com", "label": "Example" } ] },
+    "gsc": { "keyFile": "test/fixtures/does-not-exist.json", "sites": [ { "id": "example", "property": "https://example.com/", "label": "Example" } ] },
+    "indexace": { "keyFile": "test/fixtures/does-not-exist.json", "sites": [ { "id": "example", "property": "https://example.com/", "sitemap": "https://example.com/sitemap.xml", "label": "Example" } ] },
+    "claudelimits": {},
+    "wpsched": { "sites": [ { "id": "example", "label": "Example", "url": "https://example.com", "user": "mc-wpsched", "appPasswordFile": "test/fixtures/does-not-exist.txt" } ] },
+    "nanoclaw": { "dir": "test/fixtures/does-not-exist-nanoclaw" },
+    "watchdog": { "projects": [ { "id": "dummy", "label": "Dummy" } ] }
+  }
+}

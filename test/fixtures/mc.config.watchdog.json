@@ -1,0 +1,14 @@
+{
+  "name": "TESTBOX",
+  "modules": {
+    "watchdog": {
+      "model": "haiku",
+      "budgetUsd": 0.5,
+      "timeoutSecs": 300,
+      "projects": [
+        { "id": "alpha", "label": "Projekt Alfa", "sources": "logs/alpha.log" },
+        { "id": "beta", "label": "Projekt Beta", "log": "logs/beta.log" }
+      ]
+    }
+  }
+}
